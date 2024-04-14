@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #app {
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333333;
+        }
+
+        input {
+            width: calc(100% - 80px);
+            padding: 10px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .note-container {
+            margin-top: 20px;
+        }
+
+        .note {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .note-description {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        .delete-button {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h2>Bryan - Todo App</h2>
+        <input id="newNoteInput" v-model="newNoteDescription" placeholder="Enter a new note" />&nbsp;
+        <button @click="addNewNotes()">Add Notes</button>
+
+        <div class="note-container">
+            <div v-for="note in notes" :key="note.id" class="note">
+                <div class="note-description">{{ note.description }}</div>
+                <button class="delete-button" @click="deleteNotes(note.id)">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.24.0/dist/axios.min.js"></script>
+
+    <script>
+        const API_URL = "http://localhost:5038/";
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    newNoteDescription: '',
+                    notes: []
+                };
+            },
+            methods: {
+                async refreshData() {
+                    try {
+                        const response = await axios.get(API_URL + "api/todoapp/GetNOTES");
+                        this.notes = response.data;
+                    } catch (error) {
+                        console.error('Error fetching notes:', error.message);
+                    }
+                },
+                async addNewNotes() {
+                    try {
+                        const descriptionInput = document.getElementById("newNoteInput");
+                        const description = descriptionInput.value.trim();
+                        if (!description) {
+                            return;
+                        }
+
+                        const response = await axios.post(API_URL + "api/todoapp/AddNotes", {
+                            description: description
+                        });
+
+                        this.refreshData();
+                        this.newNoteDescription = '';
+                    } catch (error) {
+                        console.error('Error adding new note:', error.message);
+                    }
+                },
+                async deleteNotes(id) {
+                    try {
+                        const response = await axios.delete(API_URL + `api/todoapp/DeleteNotes?id=${id}`);
+                        this.refreshData();
+                    } catch (error) {
+                        console.error('Error deleting note:', error.message);
+                    }
+                }
+            },
+            mounted() {
+                this.refreshData();
+            }
+        });
+
+        app.mount("#app");
+    </script>
+</body>
+
+</html>
